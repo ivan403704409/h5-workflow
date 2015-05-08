@@ -1,6 +1,7 @@
 /**
  * Author: Ivan
- * update: 2015.04.20
+ * create: 2015.04.20
+ * update: 2015.05.08
  */
 var gulp = require('gulp');
 var plugins = require('gulp-load-plugins'),
@@ -16,54 +17,98 @@ var path = {
   dest: 'dist/'
 };
 
-//清空dist
+//---------------------------开发时实时编译---------------------------------------------------
+// gulp.task('sass', function() {
+//     gulp.src(path.src + 'css/*.scss')     //拿到源文件
+//         // .pipe(P.sass({ compass: true }))        //css排版成一行
+//         .pipe(P.compass({
+//             css: path.src + 'css',
+//             sass: path.src + 'css', //要编译的scss所在目录
+//             image: path.src + 'images/sprite/', //icon存放目录,在
+//             generated_images_path: path.src + 'images/' //合并后的图片输出路径
+//         }))
+//         // .pipe(P.sass())
+//         .pipe(gulp.dest(path.src + 'css'));
+// });
+
+
+// gulp.task('sass-ignoreError', function() {
+//     gulp.src(path.src + 'css/*.scss')
+//         // .pipe(P.sass({ compass: true }))        //css排版成一行
+//         .pipe(P.plumber()) //忽略错误
+//         .pipe(P.compass({
+//             css: path.src + 'css',
+//             sass: path.src + 'css', //要编译的scss所在目录
+//             image: path.src + 'images/sprite/', //icon存放目录,在
+//             generated_images_path: path.src + 'images/' //合并后的图片输出路径
+//         }))
+//         // .pipe(P.sass())
+//         .pipe(gulp.dest(path.src + 'css'));
+// });
+
+// sass编译,忽略错误
+gulp.task('sass-ignoreError', function(){
+  gulp.src( path.src + '**/*.scss' )   //拿到源文件
+    .pipe(P.plumber())                 //plumber给pipe打补丁,忽略错误,继续执行
+    .pipe(P.sass())
+    .pipe(gulp.dest( path.src ))      //输出  
+    .pipe(P.minifyCss(/*{keepBreaks:true}*/))  
+    // .pipe(gulp.dest( path.src ))      //输出    
+});
+//监听sass,忽略错误
+gulp.task('watch', function() {
+  gulp.watch(path.src + '**/*.scss', ['sass-ignoreError']);
+});
+//---------------------------开发时实时编译end---------------------------------------------------
+
+
+
+
+
+//---------------------------构建上线代码---------------------------------------------------
+//1.清空dist
 gulp.task('clean-dist-all', function (){
   return gulp.src(path.dest)
     .pipe(P.clean());
 });
 
-//less编译,错误会报错
-gulp.task('less-src', function(){
-  gulp.src( path.src + '**/*.less' )   //拿到源文件
-    .pipe(P.less())
+//2.sass编译,错误会报错
+gulp.task('sass', function(){
+  gulp.src( path.src + '**/*.scss' )   //拿到源文件
+    .pipe(P.sass())
     .pipe(gulp.dest( path.src ));      //输出
 });
 
-//copy到dist,copy之前要清空和less编译检查
-gulp.task('copy-all', ['clean-dist-all', 'less-src'], function () {
+//3.copy所有文件到dist,copy之前要清空和sass编译检查
+gulp.task('copy-all', ['clean-dist-all', 'sass'], function () {
   return gulp.src(path.src + '**/*')
     .pipe(gulp.dest(path.dest));
 }); 
 
-//清除dist中的less
-gulp.task('clean-dist-less', ['copy-all'],  function (){
-  gulp.src(path.dest + '**/*.less')
+//4.清除dist中的sass
+gulp.task('clean-dist-sass', ['copy-all'],  function (){
+  gulp.src(path.dest + '**/*.scss')
     .pipe(P.clean());
 });
 
-
-
-//开发时实时编译---------------------------------------------------
-
-//less编译,忽略错误
-gulp.task('less-src-ignoreError', function(){
-  gulp.src( path.src + '**/*.less' )   //拿到源文件
-    .pipe(P.plumber())                 //plumber给pipe打补丁,忽略错误,继续执行
-    .pipe(P.less())
-    .pipe(gulp.dest( path.src ));      //输出
+//5.压缩dist中的css
+gulp.task('cssmin', ['clean-dist-sass'], function(){
+  gulp.src( path.dest + '**/*.css' )   //拿到源文件
+    .pipe(P.minifyCss(/*{keepBreaks:true}*/))  
+    .pipe(gulp.dest( path.dest ));      //输出
 });
 
-//监听less,忽略错误
-gulp.task('watch-less', function() {
-  gulp.watch(path.src + '**/*.less', ['less-src-ignoreError']);
+//6.压缩dist中的js
+gulp.task('jsmin', ['cssmin'], function(){
+  gulp.src( path.dest + '**/*.js' )   //拿到源文件
+    .pipe(P.uglify())                 //压缩
+    .pipe(gulp.dest( path.dest ));    //输出
 });
+//构建发布用的代码,清空-->sass编译检查-->复制-->删除.sass-->压缩css
+gulp.task('build', ['jsmin']);
+//---------------------------构建上线代码---------------------------------------------------
 
-//开发时实时编译end---------------------------------------------------
-
-
-
-//发布,清空-->less编译检查-->复制-->删除.less
-gulp.task('build', ['clean-dist-less']);
+  
 
 
 
@@ -93,3 +138,5 @@ gulp.task('build', ['clean-dist-less']);
 //     .pipe(P.imagemin())          //压缩
 //     .pipe(gulp.dest( path.dest ));       //输出
 // });
+// 
+// 
