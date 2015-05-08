@@ -104,6 +104,14 @@ gulp.task('jsmin', ['cssmin'], function(){
     .pipe(P.uglify())                 //压缩
     .pipe(gulp.dest( path.dest ));    //输出
 });
+
+//生成zip文件,并以所在目录名命名
+gulp.task('zip', function () {
+  var fileName = process.cwd().match(/\\([^\\]+)$/)[1] + '.zip';    //当前目录名
+  gulp.src( path.dest + '*')
+        .pipe(P.zip(fileName))    //压缩成.zip
+        .pipe(gulp.dest('./'));
+})
 //构建发布用的代码,清空-->sass编译检查-->复制-->删除.sass-->压缩css
 gulp.task('build', ['jsmin']);
 //---------------------------构建上线代码---------------------------------------------------
