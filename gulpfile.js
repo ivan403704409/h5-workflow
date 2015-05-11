@@ -128,13 +128,12 @@ gulp.task('zip', function () {
 
 
 
-//构建发布用的代码,清空-->sass编译检查-->复制-->【删除.sass, 压缩css, 压缩js】
+//构建发布用的代码,清空-->sass编译检查-->复制-->【删除.sass, 压缩css, 压缩js】-->打包压缩成.zip
 gulp.task('build', P.sequence(  //处理执行顺序
   'clean-dist',
   'sass-src', 
-  'copy-src',
-  'cleanSass-dist', 
-  ['cssMin-dist', 'jsMin-dist', 'imgMin-dist'], 
+  'copy-src',   
+  ['cleanSass-dist', 'cssMin-dist', 'jsMin-dist', 'imgMin-dist'], 
   'zip'
 ));
 //---------------------------构建上线代码---------------------------------------------------
